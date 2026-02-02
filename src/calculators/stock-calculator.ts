@@ -1,5 +1,5 @@
 // 股票计算模块
-import type { StockDataPoint, MACDData, KDJData } from "./types";
+import type { StockDataPoint, MACDData, KDJData } from "../types";
 
 /**
  * 计算移动平均线
@@ -139,9 +139,11 @@ export function calculateKDJ(
     // 使用 SMA(X, N, M) = (M * X + (N - M) * 前一日SMA) / N
     // K = SMA(RSV, 3, 1), D = SMA(K, 3, 1)
     // 初始值为 50，但第一天也要用公式计算
-    const k = (1 * rsv + 2 * (prevK ?? 50)) / 3;
-    const d = (1 * k + 2 * (prevD ?? 50)) / 3;
-    const j = 3 * k - 2 * d;
+    const prevKValue: number = prevK ?? 50;
+    const prevDValue: number = prevD ?? 50;
+    const k: number = (1 * rsv + 2 * prevKValue) / 3;
+    const d: number = (1 * k + 2 * prevDValue) / 3;
+    const j: number = 3 * k - 2 * d;
 
     prevK = k;
     prevD = d;

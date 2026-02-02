@@ -47,3 +47,15 @@ export interface StockCompleteDataRow {
   J: string;
   KDJ信号: string;
 }
+
+export interface HotStock {
+  code: string;
+  name: string;
+  rank: number;
+  market: string;
+}
+
+export interface HotStocksResponse {
+  data: HotStock[];
+  total: number;
+}

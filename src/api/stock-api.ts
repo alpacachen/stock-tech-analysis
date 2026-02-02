@@ -1,6 +1,6 @@
 // 股票数据获取 API
-import { convertToTencentSymbol } from "./utils";
-import type { StockDataPoint } from "./types";
+import { convertToTencentSymbol } from "../utils";
+import type { StockDataPoint, HotStock, HotStocksResponse } from "../types";
 
 const DEFAULT_HEADERS = {
   "User-Agent":
@@ -56,7 +56,7 @@ export async function getStockCodeByName(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
 
     if (
       data.QuotationCodeTable &&
@@ -94,7 +94,7 @@ export async function getStockHistory(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as any;
     const stockData = data.data[tencentSymbol];
 
     if (stockData && stockData.qfqday && Array.isArray(stockData.qfqday)) {
@@ -112,5 +112,64 @@ export async function getStockHistory(
   } catch (error) {
     console.error("获取股票历史数据失败:", error);
     return [];
+  }
+}
+
+export async function getHotStocks(
+  limit: number = 100
+): Promise<HotStocksResponse> {
+  try {
+    const url = "https://emappdata.eastmoney.com/stockrank/getAllCurrentList";
+
+    const response = await fetchWithTimeout(url, {
+      method: "POST",
+      headers: {
+        ...DEFAULT_HEADERS,
+        "Content-Type": "application/json",
+        Referer: "https://vipmoney.eastmoney.com/",
+      },
+      body: JSON.stringify({
+        appId: "appId01",
+        globalId: "786e4c21-70dc-435a-93bb-38",
+        marketType: "",
+        pageNo: 1,
+        pageSize: limit,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json() as any;
+
+    if (result.status === -1) {
+      console.warn("热门股票API返回异常:", result.message);
+      return { data: [], total: 0 };
+    }
+
+    if (result.data && Array.isArray(result.data)) {
+      const hotStocks: HotStock[] = result.data.map((item: any) => {
+        const sc = item.sc || "";
+        const code = sc.replace(/^(SH|SZ|BJ)/, "");
+        const market = sc.startsWith("SH") ? "1" : sc.startsWith("SZ") ? "0" : sc.startsWith("BJ") ? "2" : "";
+        return {
+          code,
+          name: "",
+          rank: item.rk || 0,
+          market,
+        };
+      });
+
+      return {
+        data: hotStocks,
+        total: result.total || hotStocks.length,
+      };
+    }
+
+    return { data: [], total: 0 };
+  } catch (error) {
+    console.error("获取热门股票失败:", error);
+    return { data: [], total: 0 };
   }
 }
