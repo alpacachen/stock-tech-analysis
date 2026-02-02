@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { getStockCodeByName, getStockHistory } from "../src/api/stock-api";
-import { formatStockData, formatStockReport, printStockTrend } from "../src/formatters/stock-formatter";
-import { saveStockData, saveStockReport } from "../src/utils/file-utils";
+import { formatStockData, printStockTrend } from "../src/formatters/stock-formatter";
+import { saveStockData } from "../src/utils/file-utils";
 
 async function main() {
   const stockName = process.argv[2];
@@ -29,11 +29,6 @@ async function main() {
   const dataContent = formatStockData(historyData);
   const dataFilePath = saveStockData(stockName, dataContent);
   console.log(`数据文件已保存到: ${dataFilePath}`);
-  
-  console.log("正在生成分析报告...");
-  const reportContent = formatStockReport(historyData);
-  const reportFilePath = saveStockReport(stockName, reportContent);
-  console.log(`报告文件已保存到: ${reportFilePath}`);
   
   console.log("\n========== 分析报告 ==========");
   printStockTrend(historyData);
