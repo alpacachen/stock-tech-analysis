@@ -2,20 +2,30 @@
 
 /**
  * 判断今天是否是工作日（周一到周五）
+ * 注意：此函数不考虑法定节假日，仅判断星期
  */
 export function isWorkday(): boolean {
-  const day = new Date().getDay();
+  const day = getChinaTime().getDay();
   return day >= 1 && day <= 5;
+}
+
+/**
+ * 获取中国时区的当前时间
+ */
+function getChinaTime(): Date {
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
 }
 
 /**
  * 判断当前是否处于A股交易日内（9:30-15:00）
  * 包括中午休市的11:30-13:00时段
+ * 使用中国时区（Asia/Shanghai）
  */
 export function isTradingHours(): boolean {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
+  const chinaTime = getChinaTime();
+  const hours = chinaTime.getHours();
+  const minutes = chinaTime.getMinutes();
   const time = hours * 60 + minutes;
 
   const tradingStart = 9 * 60 + 30;

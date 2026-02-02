@@ -7,6 +7,35 @@ const DEFAULT_HEADERS = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 };
 
+const DEFAULT_TIMEOUT = 10000; // 10秒超时
+
+/**
+ * 带超时的 fetch 请求
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeout: number = DEFAULT_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`请求超时 (${timeout}ms)`);
+    }
+    throw error;
+  }
+}
+
 /**
  * 通过股票中文名称搜索股票代码
  */
@@ -16,7 +45,7 @@ export async function getStockCodeByName(
   try {
     const url = `https://searchapi.eastmoney.com/api/suggest/get?input=${encodeURIComponent(name)}&type=14&count=5`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         ...DEFAULT_HEADERS,
         Referer: "https://quote.eastmoney.com/",
@@ -54,7 +83,7 @@ export async function getStockHistory(
     const tencentSymbol = convertToTencentSymbol(code);
     const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${tencentSymbol},day,,,200,qfq`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         ...DEFAULT_HEADERS,
         Referer: "https://finance.qq.com/",
