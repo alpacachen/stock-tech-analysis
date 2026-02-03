@@ -7,7 +7,13 @@ import {
   detectKDJSignal,
   getToday,
 } from "../utils";
-import { calculateAllMAs, calculateMACD, calculateKDJ, calculateChange } from "../calculators/stock-calculator";
+import {
+  calculateAllMAs,
+  calculateAllRSIs,
+  calculateMACD,
+  calculateKDJ,
+  calculateChange,
+} from "../calculators/stock-calculator";
 import type {
   StockDataPoint,
   StockCompleteDataRow,
@@ -108,6 +114,7 @@ function buildTableRow(
   ma5Arr: (number | null)[],
   ma10Arr: (number | null)[],
   ma20Arr: (number | null)[],
+  rsi14Arr: (number | null)[],
   macdData: MACDData[],
   kdjData: KDJData[]
 ): StockCompleteDataRow {
@@ -160,6 +167,7 @@ function buildTableRow(
       KDJ信号: prevKdjItem && kdjItem.k !== null && kdjItem.d !== null && prevKdjItem.k !== null && prevKdjItem.d !== null
         ? detectKDJSignal(kdjItem.k, kdjItem.d, prevKdjItem.k, prevKdjItem.d)
         : "",
+      RSI14: formatValue(rsi14Arr[index]),
     };
   } catch (error) {
     throw new Error(`构建表格行数据时发生错误 (index: ${index}): ${error instanceof Error ? error.message : String(error)}`);
@@ -181,11 +189,12 @@ function formatCompleteDataTable(
     output += `共 ${historicalData.length} 个交易日历史数据\n\n`;
 
     const { ma5Arr, ma10Arr, ma20Arr } = calculateAllMAs(data);
+    const { rsi14Arr } = calculateAllRSIs(data);
     const macdData = calculateMACD(data);
     const kdjData = calculateKDJ(data);
 
     const completeTable: StockCompleteDataRow[] = historicalData.map((item, index) =>
-      buildTableRow(item, index, ma5Arr, ma10Arr, ma20Arr, macdData, kdjData)
+      buildTableRow(item, index, ma5Arr, ma10Arr, ma20Arr, rsi14Arr, macdData, kdjData)
     );
 
     output += formatTable(completeTable);
@@ -198,6 +207,7 @@ function formatCompleteDataTable(
         ma5Arr,
         ma10Arr,
         ma20Arr,
+        rsi14Arr,
         macdData,
         kdjData
       );

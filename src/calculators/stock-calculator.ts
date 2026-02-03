@@ -39,6 +39,62 @@ export function calculateAllMAs(
 }
 
 /**
+ * 计算 RSI 指标 (Wilder RSI)
+ * RSI = 100 - 100 / (1 + RS), RS = AvgGain / AvgLoss
+ *
+ * 返回与 prices 等长的数组，前 period 个（含不足期）返回 null
+ */
+export function calculateRSI(
+  prices: number[],
+  period: number = 14
+): (number | null)[] {
+  if (prices.length === 0) return [];
+
+  const rsiArr: (number | null)[] = new Array(prices.length).fill(null);
+  if (prices.length <= period) return rsiArr;
+
+  let gainSum = 0;
+  let lossSum = 0;
+
+  // 初始 period 根变化（从 1 到 period）
+  for (let i = 1; i <= period; i++) {
+    const change = prices[i] - prices[i - 1];
+    if (change >= 0) gainSum += change;
+    else lossSum += -change;
+  }
+
+  let avgGain = gainSum / period;
+  let avgLoss = lossSum / period;
+
+  // 第 period 根开始有 RSI 值
+  rsiArr[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+
+  for (let i = period + 1; i < prices.length; i++) {
+    const change = prices[i] - prices[i - 1];
+    const gain = change > 0 ? change : 0;
+    const loss = change < 0 ? -change : 0;
+
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+
+    rsiArr[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  return rsiArr;
+}
+
+export function calculateAllRSIs(
+  data: StockDataPoint[]
+): {
+  rsi14Arr: (number | null)[];
+} {
+  const prices = data.map((item) => parseFloat(item.close));
+  return {
+    rsi14Arr: calculateRSI(prices, 14),
+  };
+}
+
+/**
  * 计算指数移动平均线 EMA
  * @param prices 价格数组
  * @param period 周期

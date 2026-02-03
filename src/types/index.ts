@@ -46,6 +46,7 @@ export interface StockCompleteDataRow {
   D: string;
   J: string;
   KDJ信号: string;
+  RSI14: string;
 }
 
 export interface HotStock {

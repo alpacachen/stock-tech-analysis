@@ -45,6 +45,20 @@ export function saveStockData(stockName: string, dataContent: string): string {
 export function saveStockReport(stockName: string, reportContent: string): string {
   const stockDir = getStockDir(stockName);
   const filePath = path.join(stockDir, "report.md");
-  fs.writeFileSync(filePath, reportContent, "utf-8");
+  const content = ensureStockNameHeader(stockName, reportContent);
+  fs.writeFileSync(filePath, content, "utf-8");
   return filePath;
+}
+
+function ensureStockNameHeader(stockName: string, content: string): string {
+  const trimmed = content.trimStart();
+  const firstLine = trimmed.split(/\r?\n/, 1)[0] ?? "";
+
+  // 已经在标题中包含股票名则不重复加
+  const hasNameInTitle =
+    /^#{1,6}\s+/.test(firstLine) && firstLine.includes(stockName);
+
+  if (hasNameInTitle) return content;
+
+  return `# ${stockName}\n\n${trimmed}`;
 }
